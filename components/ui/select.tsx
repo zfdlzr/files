@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 interface SelectContextType {
   value: string
   onValueChange: (value: string) => void
+  optionsRef: React.MutableRefObject<React.ReactNode>
 }
 
 const SelectContext = React.createContext<SelectContextType | undefined>(undefined)
@@ -29,8 +30,10 @@ function Select({
   onValueChange: (value: string) => void
   children: React.ReactNode
 }) {
+  const optionsRef = React.useRef<React.ReactNode>(null)
+  
   return (
-    <SelectContext.Provider value={{ value, onValueChange }}>
+    <SelectContext.Provider value={{ value, onValueChange, optionsRef }}>
       <div data-slot="select" {...props}>
         {children}
       </div>
@@ -65,17 +68,7 @@ function SelectTrigger({
   size?: 'sm' | 'default'
   id?: string
 }) {
-  const { value, onValueChange } = useSelectContext()
-  
-  // Extract SelectContent/SelectItem elements that will be rendered as option tags
-  const options = React.Children.toArray(children).map((child: any) => {
-    if (child && typeof child === 'object' && child.type?.name === 'SelectContent') {
-      return child.props.children
-    }
-    return null
-  }).filter(Boolean)
-  
-  const optionElements = React.Children.toArray(options[0]).flat()
+  const { value, onValueChange, optionsRef } = useSelectContext()
   
   return (
     <div className="relative">
@@ -93,7 +86,7 @@ function SelectTrigger({
         {...(props as any)}
       >
         {!value && <option value="">Select an option</option>}
-        {optionElements}
+        {optionsRef.current}
       </select>
       <ChevronDownIcon className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 opacity-50 pointer-events-none" />
     </div>
@@ -106,6 +99,9 @@ function SelectContent({
 }: {
   children: React.ReactNode
 }) {
+  const { optionsRef } = useSelectContext()
+  optionsRef.current = children
+  
   return null
 }
 
