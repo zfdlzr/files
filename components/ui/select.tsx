@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 interface SelectContextType {
   value: string
   onValueChange: (value: string) => void
+  contentChildren: React.ReactNode
+  setContentChildren: (children: React.ReactNode) => void
 }
 
 const SelectContext = React.createContext<SelectContextType | undefined>(undefined)
@@ -29,8 +31,10 @@ function Select({
   onValueChange: (value: string) => void
   children: React.ReactNode
 }) {
+  const [contentChildren, setContentChildren] = React.useState<React.ReactNode>(null)
+  
   return (
-    <SelectContext.Provider value={{ value, onValueChange }}>
+    <SelectContext.Provider value={{ value, onValueChange, contentChildren, setContentChildren }}>
       <div data-slot="select" {...props}>
         {children}
       </div>
@@ -65,7 +69,7 @@ function SelectTrigger({
   size?: 'sm' | 'default'
   id?: string
 }) {
-  const { value, onValueChange } = useSelectContext()
+  const { value, onValueChange, contentChildren } = useSelectContext()
   
   return (
     <div className="relative">
@@ -82,7 +86,8 @@ function SelectTrigger({
         )}
         {...(props as any)}
       >
-        {children}
+        {!value && <option value="">Select an option</option>}
+        {contentChildren}
       </select>
       <ChevronDownIcon className="absolute right-2.5 top-1/2 -translate-y-1/2 size-4 opacity-50 pointer-events-none" />
     </div>
@@ -95,7 +100,13 @@ function SelectContent({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  const { setContentChildren } = useSelectContext()
+  
+  React.useEffect(() => {
+    setContentChildren(children)
+  }, [children, setContentChildren])
+  
+  return null
 }
 
 function SelectLabel({
