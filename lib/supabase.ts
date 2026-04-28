@@ -1,26 +1,18 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 
-// Lazy initialization of supabase client
-let supabaseClientInstance: SupabaseClient | null = null
+// Create a single supabase client for the entire application
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(target, prop) {
-    if (!supabaseClientInstance) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Validate that required environment variables are set
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "Missing Supabase credentials. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment variables."
+  )
+}
 
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error(
-          "Missing Supabase credentials. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment variables."
-        )
-      }
-
-      supabaseClientInstance = createClient(supabaseUrl, supabaseAnonKey)
-    }
-
-    return (supabaseClientInstance as any)[prop]
-  },
-})
+// Create client for client-side usage
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Create a server-side client (for server components and API routes)
 export const createServerSupabaseClient = () => {
